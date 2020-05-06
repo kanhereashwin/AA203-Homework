@@ -10,7 +10,7 @@
 clear all; clc; close all;
 
 animate = true; % change to visualize animation
-noise = false; % change to toggle stochastic disturbance
+noise = true; % change to toggle stochastic disturbance
 
 f = @sim_cartpole;
 dt = 0.1; % we work with discrete time
@@ -55,9 +55,14 @@ end
 
 figure; 
 plot(x');
+legend('x', '\theta', 'dx/dt', 'd\theta/ dt')
+xlabel('Time (in seconds)')
+ylabel('States')
 
 figure; 
 plot(u,'--');
+xlabel('Time (in seconds)')
+ylabel('u')
 
 if animate
     for t=1:ep_length

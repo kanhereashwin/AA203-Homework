@@ -7,6 +7,7 @@ while t < dt
     t = t+current_dt;
 end
 x1 = x0;
+end
 
 
 
@@ -20,5 +21,6 @@ x1 = x0;
       
         xddot = [u + mp*s.*(l*x(4,:).^2 + g*c)]./[mc+mp*s.^2];
         tddot = [-u.*c - mp*l*x(4,:).^2.*c.*s - (mc+mp)*g.*s]./[l*(mc+mp.*s.^2)];
-        xdot = [x(3:4,:); xddot; tddot];
+        xdot = [x(3:4,:); xddot(1,:); tddot(1,:)];
+    end
       
