@@ -66,6 +66,21 @@ function [x,u] = scp(x_old, u_old, u_lb, u_ub, f, linearize_dynamics, Q,R, Qf, g
     C = zeros(num_constr, (n+m)*num_steps);
     d = zeros(num_constr,1);
 
+    for i = 1:num_steps-1
+        x_ref = z_old(x_start(i):x_end(i));
+        u_ref = z_old(u_start(i): u_end(i));
+        [A, B, ~] = linearize_dynamics(x_ref, u_ref, dt);
+        f_dt = f(x_ref, u_ref, dt) - x_ref; % Keeping with sim_cartpole output
+        C(x_start(i+1):x_end(i+1), x_start(i+1):x_end(i+1)) = eye(4);
+        C(x_start(i+1):x_end(i+1), x_start(i):x_end(i)) = -A;
+        C(x_start(i+1):x_end(i+1), u_start(i): u_end(i)) = -B;
+        d(x_start(i+1):x_end(i+1), 1) = f_dt -(A - eye(4))*z_old(x_start(i):x_end(i)) - B*z_old(u_start(i):u_end(i));
+        % Dynamics function already given
+        %[A, B, c] = linearize_dynamics
+        % [A, B, c] = linearize_dynamics(x_ref, u_ref, dt)
+        %d(i, 1) = 
+    end
+    
     % Fill C,d with the appropriate dynamics matrices to enforce the
     % constraints.
     % Specifically, for each timestep: x_bar,u_bar is the state and control
@@ -76,7 +91,8 @@ function [x,u] = scp(x_old, u_old, u_lb, u_ub, f, linearize_dynamics, Q,R, Qf, g
         % represents the linearized equality constraints.
     % initial condition constraint
         % TODO - Please add the initial codition constraint
-
+    C(1:4, x_start(1):x_end(1)) = eye(4);
+    d(1:4, 1) = x0;
     %% Build CVX instance of our optimization problem
     cvx_begin quiet
 
@@ -87,8 +103,10 @@ function [x,u] = scp(x_old, u_old, u_lb, u_ub, f, linearize_dynamics, Q,R, Qf, g
         subject to
             % TODO
             % TODO: Include linearized dynamics constraints C*x <= d.
+            C * z == d
             lb <= z <= ub; % control effort bounds
             % TODO - Add trust region constraints.
+            z_old - 0.5 <= z <= z_old + 0.5
     cvx_end
 
     var = z; % retrieve the optimal solution from CVX

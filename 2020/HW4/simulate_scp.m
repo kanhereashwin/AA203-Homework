@@ -84,9 +84,13 @@ end
 
 figure; 
 plot(x');
+title('States')
+legend('x1', 'x2', 'x3', 'x4')
 
 figure; 
 plot(u,'--');
+title('Control')
+legend('u1')
 
 if animate
     for t=1:ep_length
