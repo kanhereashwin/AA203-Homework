@@ -3,6 +3,7 @@ import gym
 import numpy as np
 from itertools import count
 from collections import namedtuple
+from matplotlib import pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -57,6 +58,11 @@ class Policy(nn.Module):
         # mean of action distribution,
         # variance of action distribution (pass this through a non-negative function),
         # state value
+        x = F.relu(self.affine1(x))
+        action_mean = self.action_mean(x)
+        action_var = F.softplus(self.action_var(x))
+        state_values = self.value_head(x)
+
         
         return 0.5*action_mean, 0.5*action_var, state_values
     
@@ -94,9 +100,7 @@ def finish_episode():
     for r in model.rewards[::-1]:
         # TODO compute the value at state x
         # via the reward and the discounted tail reward
-
-        
-        
+        R = r + args.gamma * R
         returns.insert(0, R)
         
     # whiten the returns
@@ -105,14 +109,15 @@ def finish_episode():
     
     for (log_prob, value), R in zip(saved_actions, returns):
         # TODO compute the advantage via subtracting off value
-        
+        advantage = R - value.item()
         
         # TODO calculate actor (policy) loss, from log_prob (saved in select action)
         # and from advantage
-        
+        policy_losses.append(-log_prob * advantage)
         # append this to policy_losses
         
         # TODO calculate critic (value) loss
+        value_losses.append(F.mse_loss(value, torch.tensor([R])))
         
     # reset gradients
     optimizer.zero_grad()
@@ -167,12 +172,17 @@ def main():
                   i_episode, ep_reward, running_reward))
             
         # check if we have "solved" the problem
-        if running_reward > 200:
+        if running_reward > 200:#200:
             print("Solved! Running reward is now {} and "
                   "the last episode runs to {} time steps!".format(running_reward, t))
 
             # TODO plot episodic_rewards --- submit this plot with your code
-            
+            plt.figure()
+            plt.plot(episodic_rewards)
+            plt.title('Episodic rewards')
+            plt.xlabel('Episodes')
+            plt.ylabel('Reward')
+            plt.show()
             break
             
 if __name__ == '__main__':
